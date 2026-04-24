@@ -117,10 +117,56 @@ textarea{resize:vertical;min-height:70px}
     <button class="tab" onclick="showPage('logs')">Inspection Log</button>
   </div>
   <div class="spacer"></div>
-  <span class="nav-chip" id="nav-chip">0 properties</span>
+  <button class="btn btn-g btn-sm no-print" onclick="openSettings()" id="sync-btn">⚙ Sync setup</button><span class="nav-chip" id="nav-chip">0 properties</span>
 </nav>
 
 <div class="print-sheet" id="print-sheet"></div>
+<!-- SETTINGS MODAL -->
+<div class="overlay no-print" id="settings-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">Sync setup</div>
+      <button class="modal-x" onclick="closeSettings()">✕</button>
+    </div>
+    <div class="info-box" style="margin-bottom:1rem">
+      <strong>Two separate connections — both required:</strong><br>
+      (1) Tenants post sign-offs to your Apps Script URL.<br>
+      (2) You read sign-offs by pasting your Sheet's CSV URL — only works when you're logged into Google.
+    </div>
+    <div style="border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1rem">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:.6rem">Step 1 — Apps Script URL (write-only, for tenants)</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:.75rem;line-height:1.6">
+        1. Create a Google Sheet → <strong>Extensions → Apps Script</strong><br>
+        2. Paste contents of <strong>SETUP_GOOGLE_SCRIPT.js</strong> → Save<br>
+        3. <strong>Deploy → New deployment → Web app</strong>, access: <strong>Anyone</strong><br>
+        4. Copy the Web app URL and paste below
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label>Apps Script web app URL</label>
+        <input type="url" id="script-url-input" placeholder="https://script.google.com/macros/s/...">
+      </div>
+    </div>
+    <div style="margin-bottom:1rem">
+      <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:.6rem">Step 2 — Sheet CSV URL (read-only, for your admin panel)</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:.75rem;line-height:1.6">
+        1. Open your Google Sheet → <strong>File → Share → Publish to web</strong><br>
+        2. Choose the <strong>Inspections</strong> sheet, format: <strong>CSV</strong> → Publish<br>
+        3. Copy the URL and paste below<br>
+        <span style="color:var(--red);font-weight:600">Only you can access this URL — you must be logged into Google.</span>
+      </div>
+      <div class="fg" style="margin-bottom:0">
+        <label>Sheet CSV URL</label>
+        <input type="url" id="sheet-csv-input" placeholder="https://docs.google.com/spreadsheets/d/.../pub?...output=csv">
+      </div>
+    </div>
+    <div id="sync-status" style="font-size:13px;margin-bottom:1rem;display:none"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-g btn-sm" onclick="testSheetURL()">Test &amp; load logs</button>
+      <button class="btn btn-p btn-sm" onclick="saveScriptURL()">Save both</button>
+    </div>
+  </div>
+</div>
+
 
 <div class="page active" id="page-dashboard">
   <div class="ph">
@@ -548,7 +594,125 @@ function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+
+const SCRIPT_URL_KEY = 'firecheck_script_url';
+
+const SHEET_CSV_KEY = 'firecheck_sheet_csv';
+
+function openSettings() {
+  document.getElementById('script-url-input').value = localStorage.getItem(SCRIPT_URL_KEY) || '';
+  document.getElementById('sheet-csv-input').value = localStorage.getItem(SHEET_CSV_KEY) || '';
+  document.getElementById('sync-status').style.display = 'none';
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function saveScriptURL() {
+  const scriptURL = document.getElementById('script-url-input').value.trim();
+  const csvURL = document.getElementById('sheet-csv-input').value.trim();
+  if(scriptURL) localStorage.setItem(SCRIPT_URL_KEY, scriptURL);
+  else localStorage.removeItem(SCRIPT_URL_KEY);
+  if(csvURL) localStorage.setItem(SHEET_CSV_KEY, csvURL);
+  else localStorage.removeItem(SHEET_CSV_KEY);
+  updateSyncBtn(!!(scriptURL || csvURL));
+  closeSettings();
+  if(csvURL) loadRemoteLogs();
+}
+
+function testSheetURL() {
+  const csvURL = document.getElementById('sheet-csv-input').value.trim();
+  if(!csvURL) { alert('Please paste your Sheet CSV URL first.'); return; }
+  const status = document.getElementById('sync-status');
+  status.style.display = 'block';
+  status.style.color = 'var(--text2)';
+  status.textContent = 'Loading sign-offs from sheet...';
+  parseSheetCSV(csvURL, (logs, err) => {
+    if(err) {
+      status.style.color = 'var(--red)';
+      status.textContent = '✗ Could not load sheet. Make sure you are logged into Google and the CSV URL is correct.';
+      return;
+    }
+    status.style.color = 'var(--green)';
+    status.textContent = '✓ Connected — found ' + logs.length + ' sign-off(s) in the sheet.';
+  });
+}
+
+function updateSyncBtn(connected) {
+  const btn = document.getElementById('sync-btn');
+  if(connected) {
+    btn.textContent = '✓ Synced';
+    btn.style.color = 'var(--green)';
+    btn.style.borderColor = 'var(--green)';
+  } else {
+    btn.textContent = '⚙ Sync setup';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  }
+}
+
+
+
+function parseSheetCSV(url, callback) {
+  fetch(url)
+    .then(r => {
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    })
+    .then(csv => {
+      const rows = csv.trim().split('\n').map(r => {
+        // Handle quoted CSV fields
+        const fields = [];
+        let cur = '', inQ = false;
+        for(let i = 0; i < r.length; i++) {
+          if(r[i] === '"') { inQ = !inQ; }
+          else if(r[i] === ',' && !inQ) { fields.push(cur); cur = ''; }
+          else { cur += r[i]; }
+        }
+        fields.push(cur);
+        return fields;
+      });
+      // Skip header row
+      const logs = rows.slice(1).filter(r => r.length >= 9 && r[0]).map(r => ({
+        timestamp: new Date(r[0]).getTime() || Date.now(),
+        propertyAddress: r[1] || '',
+        inspector: r[2] || '',
+        role: r[3] || '',
+        condition: r[4] || '',
+        notes: r[5] || '',
+        replaceChecks: r[6] ? r[6].split(', ').filter(Boolean) : [],
+        propertyId: r[7] || '',
+        id: r[8] || ('remote-' + Math.random().toString(36).slice(2))
+      }));
+      callback(logs, null);
+    })
+    .catch(err => callback([], err));
+}
+
+function loadRemoteLogs() {
+  const csvURL = localStorage.getItem(SHEET_CSV_KEY);
+  if(!csvURL) return;
+  parseSheetCSV(csvURL, (remoteLogs, err) => {
+    if(err || !remoteLogs.length) return;
+    const localIds = new Set(db.logs.map(l => l.id).filter(Boolean));
+    let added = 0;
+    remoteLogs.forEach(l => {
+      if(!localIds.has(l.id)) { db.logs.push(l); added++; }
+    });
+    if(added > 0) { save(); renderAll(); }
+  });
+}
+
+function initSyncBtn() {
+  const url = localStorage.getItem(SCRIPT_URL_KEY);
+  if(url) updateSyncBtn(true);
+}
+
 load();
+initSyncBtn();
+loadRemoteLogs();
 </script>
 </body>
 </html>
