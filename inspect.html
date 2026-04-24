@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fire Alarm Inspection</title>
+<style>
+  :root {
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --red-mid: #F09595;
+    --red-dark: #A32D2D;
+    --green: #639922;
+    --green-light: #EAF3DE;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --amber-dark: #633806;
+    --blue-light: #E6F1FB;
+    --blue: #185FA5;
+    --gray-bg: #F7F6F3;
+    --gray-border: #E2E0D8;
+    --gray-text: #888780;
+    --text: #1a1a18;
+    --text-2: #5F5E5A;
+    --white: #ffffff;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray-bg); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: var(--red); color: #fff; padding: 0; }
+  .header-inner { max-width: 560px; margin: 0 auto; padding: 1.25rem 1.5rem; }
+  .header-top { display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; }
+  .alarm-badge { background: rgba(255,255,255,0.2); border-radius: var(--radius-sm); padding: 4px 12px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
+  .alarm-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .alarm-sub { font-size: 14px; opacity: 0.85; margin-top: 4px; }
+
+  /* CONTENT */
+  .content { max-width: 560px; margin: 0 auto; padding: 1.5rem; }
+  .card { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+  .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+  .card-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .card-icon-red { background: var(--red-light); }
+  .card-icon-amber { background: var(--amber-light); }
+  .card-icon-blue { background: var(--blue-light); }
+  .card-title { font-size: 15px; font-weight: 700; }
+
+  /* STEPS */
+  .step { display: flex; gap: 12px; margin-bottom: 14px; }
+  .step:last-child { margin-bottom: 0; }
+  .step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--red); color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .step-text { font-size: 14px; line-height: 1.6; color: var(--text); padding-top: 3px; }
+
+  /* REPLACE CHECKLIST */
+  .check-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--gray-border); cursor: pointer; }
+  .check-item:last-child { border-bottom: none; }
+  .check-item input[type=checkbox] { width: 18px; height: 18px; margin-top: 1px; cursor: pointer; accent-color: var(--amber); flex-shrink: 0; }
+  .check-label { font-size: 14px; line-height: 1.5; }
+  .check-item.checked .check-label { color: var(--amber); font-weight: 600; }
+
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--gray-border); border-radius: var(--radius-sm);
+    font-size: 15px; font-family: inherit; background: var(--white); color: var(--text);
+    transition: border-color 0.15s; outline: none; -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--red); box-shadow: 0 0 0 3px rgba(226,75,74,0.12);
+  }
+  .form-group textarea { min-height: 80px; resize: vertical; }
+
+  /* SIGNATURE */
+  .sig-wrap { border: 1px solid var(--gray-border); border-radius: var(--radius-sm); background: #fff; position: relative; overflow: hidden; }
+  #sig-canvas { display: block; width: 100%; cursor: crosshair; touch-action: none; }
+  .sig-hint { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 13px; color: var(--gray-text); pointer-events: none; transition: opacity 0.2s; text-align: center; }
+  .sig-actions { display: flex; gap: 8px; margin-top: 6px; }
+
+  /* BUTTONS */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 7px; width: 100%; padding: 14px; font-size: 16px; font-weight: 700; border-radius: var(--radius-sm); cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; letter-spacing: 0.2px; }
+  .btn-submit { background: var(--red); color: #fff; margin-top: 8px; }
+  .btn-submit:hover { background: var(--red-dark); }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-sm { width: auto; padding: 6px 14px; font-size: 13px; font-weight: 600; border: 1px solid var(--gray-border); background: var(--gray-bg); color: var(--text-2); border-radius: 6px; }
+  .btn-sm:hover { background: var(--gray-border); }
+
+  /* SUCCESS STATE */
+  .success-page { display: none; text-align: center; padding: 3rem 1.5rem; }
+  .success-icon { width: 72px; height: 72px; background: var(--green-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 32px; }
+  .success-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .success-sub { font-size: 15px; color: var(--text-2); line-height: 1.6; }
+  .success-details { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 1rem 1.25rem; margin: 1.5rem 0; text-align: left; }
+  .success-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--gray-border); font-size: 13px; }
+  .success-row:last-child { border-bottom: none; }
+  .success-key { color: var(--text-2); }
+  .success-val { font-weight: 600; text-align: right; max-width: 60%; }
+
+  /* ERROR */
+  .error-page { display: none; text-align: center; padding: 4rem 1.5rem; }
+  .error-icon { font-size: 48px; margin-bottom: 1rem; }
+
+  /* NOT FOUND */
+  .not-found { max-width: 400px; margin: 4rem auto; text-align: center; padding: 2rem; }
+
+  /* ADMIN LINK */
+  .admin-link { text-align: center; padding: 1.5rem; font-size: 13px; color: var(--text-2); }
+  .admin-link a { color: var(--red); text-decoration: none; font-weight: 600; }
+  .admin-link a:hover { text-decoration: underline; }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--gray-border); margin: 1rem 0; }
+
+  @media (max-width: 400px) {
+    .content { padding: 1rem; }
+    .header-inner { padding: 1rem; }
+    .alarm-title { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ERROR: no alarm ID -->
+<div class="error-page" id="state-noalarm">
+  <div class="not-found">
+    <div class="error-icon">🔔</div>
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:8px;">No alarm found</h2>
+    <p style="font-size:14px;color:var(--text-2);margin-bottom:1.5rem;">This QR code doesn't match any registered alarm. Please contact your property manager.</p>
+    <a href="admin.html" style="color:var(--red);font-size:14px;font-weight:600;">Go to admin panel →</a>
+  </div>
+</div>
+
+<!-- MAIN INSPECTION FLOW -->
+<div id="state-main" style="display:none;">
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-top">
+        <span class="alarm-badge" id="h-type">Smoke detector</span>
+      </div>
+      <div class="alarm-title" id="h-address">Loading...</div>
+      <div class="alarm-sub" id="h-unit"></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- TESTING INSTRUCTIONS -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon card-icon-red">🧪</div>
+        <div class="card-title">How to test this alarm</div>
+      </div>
+      <div id="steps-list"></div>
+    </div>
+
+    <!-- REPLACEMENT CHECKLIST -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon card-icon-amber">⚠️</div>
+        <div class="card-title">Check if replacement is needed</div>
+      </div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:12px;">Check any boxes that apply to this alarm:</p>
+      <div id="replace-list"></div>
+    </div>
+
+    <!-- SIGN-OFF FORM -->
+    <div class="card" id="signoff-card">
+      <div class="card-head">
+        <div class="card-icon card-icon-blue">✍️</div>
+        <div class="card-title">Inspector sign-off</div>
+      </div>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:1rem;">By signing below you confirm this alarm was inspected on <strong id="today-date"></strong>.</p>
+
+      <div class="form-group">
+        <label>Full name *</label>
+        <input type="text" id="f-name" placeholder="Your full name" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>Role *</label>
+        <select id="f-role">
+          <option value="">— Select your role —</option>
+          <option>Tenant</option>
+          <option>Property manager</option>
+          <option>Maintenance technician</option>
+          <option>Fire safety inspector</option>
+          <option>Building superintendent</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Inspection result *</label>
+        <select id="f-condition">
+          <option value="">— Select result —</option>
+          <option>Tested and passed</option>
+          <option>Tested — battery replaced</option>
+          <option>Tested — unit replaced</option>
+          <option>Requires follow-up</option>
+          <option>Unable to test — access issue</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes (optional)</label>
+        <textarea id="f-notes" placeholder="Any observations, model number, follow-up needed..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Signature *</label>
+        <div class="sig-wrap">
+          <canvas id="sig-canvas" width="600" height="130"></canvas>
+          <div class="sig-hint" id="sig-hint">Sign here</div>
+        </div>
+        <div class="sig-actions">
+          <button class="btn-sm" onclick="clearSig()">Clear</button>
+        </div>
+      </div>
+
+      <button class="btn btn-submit" onclick="submitInspection()">
+        Submit inspection sign-off
+      </button>
+    </div>
+
+    <div class="admin-link"><a href="admin.html">← Admin panel</a></div>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div id="state-success" style="display:none;">
+  <div class="header" style="background:#2d6a1b;">
+    <div class="header-inner">
+      <div class="alarm-title">Sign-off complete</div>
+      <div class="alarm-sub">Your inspection has been recorded</div>
+    </div>
+  </div>
+  <div class="content">
+    <div class="success-page" style="display:block;padding:1rem 0;">
+      <div class="success-icon">✅</div>
+      <div class="success-title">Inspection recorded</div>
+      <div class="success-sub">Thank you. This sign-off has been saved and is visible to the property manager.</div>
+      <div class="success-details" id="success-details"></div>
+    </div>
+    <div class="admin-link"><a href="admin.html">← Admin panel</a></div>
+  </div>
+</div>
+
+<script>
+const DB_KEY = 'firecheck_db_v1';
+let db = { alarms: [], logs: [] };
+let currentAlarm = null;
+let sigDrawing = false, sigCtx = null, sigCanvas = null, sigHasData = false;
+
+const INSTRUCTIONS = {
+  'Smoke detector': [
+    'Notify all occupants in the unit that you are about to test the alarm.',
+    'Press and hold the TEST button for 3–5 seconds until the alarm sounds.',
+    'Verify the alarm is loud and audible throughout the unit.',
+    'If the alarm does not sound, check battery connections and replace the battery.',
+    'Press TEST again briefly to silence the alarm. Replace cover securely.',
+    'Note the result below and complete the sign-off form.'
+  ],
+  'Carbon monoxide detector': [
+    'Ensure no CO-producing appliances (furnace, vehicle, stove) are running in enclosed spaces nearby.',
+    'Press and hold the TEST/RESET button for approximately 5 seconds.',
+    'Listen for the CO alarm pattern: 4 short beeps, pause, repeat.',
+    'Verify the pattern cycles fully and the unit resets on its own.',
+    'If no response, replace the battery (typically 9V) or check wall power connection.',
+    'Allow 30 seconds for full reset, then complete the sign-off below.'
+  ],
+  'Combination smoke/CO detector': [
+    'Notify all occupants in the unit before testing.',
+    'Press and hold the TEST button — the unit will cycle through both alarm patterns.',
+    'Listen for the smoke alarm pattern (3 beeps) followed by the CO pattern (4 beeps).',
+    'Confirm both alarm patterns sound clearly and the unit resets properly.',
+    'If only one pattern sounds, the unit may need battery replacement or full replacement.',
+    'Note the result below and complete the sign-off form.'
+  ],
+  'Heat detector': [
+    'Do NOT use open flame or a heat gun unless you are a trained fire safety professional.',
+    'Press the TEST button to verify the sounder and indicator light are functioning.',
+    'Visually inspect the unit for discolouration, cracks, or physical damage.',
+    'Check that the mounting plate is secure and no obstructions are within 50 cm.',
+    'If using a professional heat tester, follow manufacturer's instructions.',
+    'Record the condition below and complete the sign-off form.'
+  ]
+};
+
+const REPLACE_CHECKS = [
+  { label: 'Unit is 10 years old or older (check manufacture date on back of unit)', severity: 'high' },
+  { label: 'Alarm chirps or beeps repeatedly even after installing fresh batteries', severity: 'high' },
+  { label: 'Visible damage, cracks, discolouration, or melting on the housing', severity: 'high' },
+  { label: 'Failed to sound during test after installing a fresh battery', severity: 'high' },
+  { label: 'Unit has been previously exposed to smoke, fire, or water damage', severity: 'medium' },
+  { label: 'Battery compartment is corroded or contacts are damaged', severity: 'medium' }
+];
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) db = JSON.parse(raw);
+  } catch(e) {}
+}
+
+function saveDB() {
+  try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch(e) {}
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function getAlarmIdFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('alarm');
+}
+
+function init() {
+  loadDB();
+  const alarmId = getAlarmIdFromURL();
+  if (!alarmId) { showState('noalarm'); return; }
+  currentAlarm = db.alarms.find(a => a.id === alarmId);
+  if (!currentAlarm) { showState('noalarm'); return; }
+
+  // Populate header
+  document.getElementById('h-type').textContent = currentAlarm.type;
+  document.getElementById('h-address').textContent = currentAlarm.address;
+  document.getElementById('h-unit').textContent = currentAlarm.unit + (currentAlarm.installDate ? ' · Installed ' + currentAlarm.installDate : '');
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('en-CA', { dateStyle: 'long' });
+
+  // Populate steps
+  const steps = INSTRUCTIONS[currentAlarm.type] || INSTRUCTIONS['Smoke detector'];
+  document.getElementById('steps-list').innerHTML = steps.map((s, i) =>
+    `<div class="step"><div class="step-num">${i+1}</div><div class="step-text">${escHtml(s)}</div></div>`
+  ).join('');
+
+  // Populate replace checklist
+  document.getElementById('replace-list').innerHTML = REPLACE_CHECKS.map((c, i) =>
+    `<label class="check-item" id="ci-${i}">
+      <input type="checkbox" id="rc-${i}" onchange="onCheckChange(${i})">
+      <span class="check-label">${escHtml(c.label)}</span>
+    </label>`
+  ).join('');
+
+  initSig();
+  showState('main');
+}
+
+function onCheckChange(i) {
+  const checked = document.getElementById('rc-' + i).checked;
+  document.getElementById('ci-' + i).classList.toggle('checked', checked);
+}
+
+function showState(s) {
+  document.getElementById('state-noalarm').style.display = s === 'noalarm' ? 'block' : 'none';
+  document.getElementById('state-main').style.display = s === 'main' ? 'block' : 'none';
+  document.getElementById('state-success').style.display = s === 'success' ? 'block' : 'none';
+}
+
+function initSig() {
+  sigCanvas = document.getElementById('sig-canvas');
+  sigCtx = sigCanvas.getContext('2d');
+  sigCtx.strokeStyle = '#1a1a18';
+  sigCtx.lineWidth = 2.5;
+  sigCtx.lineCap = 'round';
+  sigCtx.lineJoin = 'round';
+
+  function getPos(e) {
+    const r = sigCanvas.getBoundingClientRect();
+    const scaleX = sigCanvas.width / r.width;
+    const scaleY = sigCanvas.height / r.height;
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * scaleX, y: (src.clientY - r.top) * scaleY };
+  }
+
+  sigCanvas.addEventListener('mousedown', e => { sigDrawing=true; const p=getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
+  sigCanvas.addEventListener('mousemove', e => { if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); sigHasData=true; updateSigHint(); });
+  sigCanvas.addEventListener('mouseup', ()=>sigDrawing=false);
+  sigCanvas.addEventListener('mouseleave', ()=>sigDrawing=false);
+  sigCanvas.addEventListener('touchstart', e=>{ e.preventDefault(); sigDrawing=true; const p=getPos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }, {passive:false});
+  sigCanvas.addEventListener('touchmove', e=>{ e.preventDefault(); if(!sigDrawing)return; const p=getPos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); sigHasData=true; updateSigHint(); }, {passive:false});
+  sigCanvas.addEventListener('touchend', ()=>sigDrawing=false);
+}
+
+function updateSigHint() {
+  document.getElementById('sig-hint').style.opacity = sigHasData ? '0' : '1';
+}
+
+function clearSig() {
+  sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+  sigHasData = false;
+  updateSigHint();
+}
+
+function submitInspection() {
+  const name = document.getElementById('f-name').value.trim();
+  const role = document.getElementById('f-role').value;
+  const condition = document.getElementById('f-condition').value;
+
+  if (!name) { alert('Please enter your full name.'); document.getElementById('f-name').focus(); return; }
+  if (!role) { alert('Please select your role.'); document.getElementById('f-role').focus(); return; }
+  if (!condition) { alert('Please select the inspection result.'); document.getElementById('f-condition').focus(); return; }
+  if (!sigHasData) { alert('Please draw your signature to confirm the inspection.'); sigCanvas.scrollIntoView({behavior:'smooth'}); return; }
+
+  const checks = REPLACE_CHECKS.map((c, i) =>
+    document.getElementById('rc-' + i)?.checked ? c.label : null
+  ).filter(Boolean);
+
+  const log = {
+    id: genId(),
+    alarmId: currentAlarm.id,
+    timestamp: Date.now(),
+    inspector: name,
+    role: role,
+    condition: condition,
+    notes: document.getElementById('f-notes').value.trim(),
+    replaceChecks: checks,
+    signature: sigCanvas.toDataURL('image/png')
+  };
+
+  loadDB();
+  db.logs.push(log);
+  saveDB();
+
+  // Populate success page
+  const d = new Date().toLocaleString('en-CA', { dateStyle: 'long', timeStyle: 'short' });
+  const flagNote = checks.length ? `<div class="success-row"><span class="success-key">Replacement flags</span><span class="success-val" style="color:var(--amber)">${checks.length} item(s) flagged</span></div>` : '';
+  document.getElementById('success-details').innerHTML = `
+    <div class="success-row"><span class="success-key">Alarm</span><span class="success-val">${escHtml(currentAlarm.address)} — ${escHtml(currentAlarm.unit)}</span></div>
+    <div class="success-row"><span class="success-key">Inspector</span><span class="success-val">${escHtml(name)} (${escHtml(role)})</span></div>
+    <div class="success-row"><span class="success-key">Result</span><span class="success-val">${escHtml(condition)}</span></div>
+    <div class="success-row"><span class="success-key">Date/time</span><span class="success-val">${d}</span></div>
+    ${flagNote}
+  `;
+
+  showState('success');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+init();
+</script>
+</body>
+</html>

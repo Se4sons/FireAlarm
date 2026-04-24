@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fire Alarm Admin — Inspection Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --red-mid: #F09595;
+    --green: #639922;
+    --green-light: #EAF3DE;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --gray-bg: #F7F6F3;
+    --gray-border: #E2E0D8;
+    --gray-text: #888780;
+    --text: #1a1a18;
+    --text-2: #5F5E5A;
+    --white: #ffffff;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.10), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray-bg); color: var(--text); min-height: 100vh; }
+
+  /* NAV */
+  .nav { background: var(--white); border-bottom: 1px solid var(--gray-border); padding: 0 2rem; display: flex; align-items: center; gap: 1.5rem; height: 58px; position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow); }
+  .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--text); text-decoration: none; }
+  .logo-icon { width: 32px; height: 32px; background: var(--red); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 18px; height: 18px; }
+  .nav-tabs { display: flex; gap: 2px; margin-left: 1rem; }
+  .nav-tab { padding: 6px 14px; font-size: 14px; font-weight: 500; border-radius: var(--radius-sm); border: none; background: none; cursor: pointer; color: var(--text-2); transition: all 0.15s; }
+  .nav-tab:hover { background: var(--gray-bg); color: var(--text); }
+  .nav-tab.active { background: var(--red-light); color: var(--red); }
+  .nav-spacer { flex: 1; }
+  .nav-badge { font-size: 12px; background: var(--gray-bg); color: var(--text-2); padding: 4px 10px; border-radius: 99px; border: 1px solid var(--gray-border); }
+
+  /* LAYOUT */
+  .page { display: none; max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem; box-shadow: var(--shadow); }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 8px; }
+  .card-title svg { color: var(--red); }
+
+  /* STATS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .stat { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 1.25rem; box-shadow: var(--shadow); }
+  .stat-val { font-size: 32px; font-weight: 700; line-height: 1; }
+  .stat-lbl { font-size: 12px; color: var(--text-2); margin-top: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-red .stat-val { color: var(--red); }
+  .stat-green .stat-val { color: var(--green); }
+  .stat-amber .stat-val { color: var(--amber); }
+
+  /* FORM */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+  .form-group label { font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input, .form-group select, .form-group textarea {
+    padding: 9px 12px; border: 1px solid var(--gray-border); border-radius: var(--radius-sm);
+    font-size: 14px; font-family: inherit; background: var(--white); color: var(--text);
+    transition: border-color 0.15s; outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--red); box-shadow: 0 0 0 3px rgba(226,75,74,0.1); }
+  .form-group textarea { resize: vertical; min-height: 80px; }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px; font-size: 14px; font-weight: 600; border-radius: var(--radius-sm); cursor: pointer; border: none; transition: all 0.15s; font-family: inherit; text-decoration: none; }
+  .btn-primary { background: var(--red); color: #fff; }
+  .btn-primary:hover { background: #c73a39; }
+  .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--gray-border); }
+  .btn-ghost:hover { background: var(--gray-bg); color: var(--text); }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red-mid); }
+  .btn-danger:hover { background: var(--red-light); }
+
+  /* ALARM LIST */
+  .alarm-table { width: 100%; border-collapse: collapse; }
+  .alarm-table th { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-2); padding: 8px 12px; border-bottom: 1px solid var(--gray-border); text-align: left; }
+  .alarm-table td { padding: 12px; border-bottom: 1px solid var(--gray-border); font-size: 14px; vertical-align: middle; }
+  .alarm-table tr:last-child td { border-bottom: none; }
+  .alarm-table tr:hover td { background: var(--gray-bg); }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .badge-ok { background: var(--green-light); color: #3B6D11; }
+  .badge-due { background: var(--amber-light); color: #633806; }
+  .badge-new { background: var(--gray-bg); color: var(--text-2); border: 1px solid var(--gray-border); }
+
+  /* LOG LIST */
+  .log-entry { padding: 1rem 0; border-bottom: 1px solid var(--gray-border); display: flex; gap: 16px; align-items: flex-start; }
+  .log-entry:last-child { border-bottom: none; }
+  .log-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--red-light); color: var(--red); font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .log-body { flex: 1; }
+  .log-addr { font-size: 14px; font-weight: 600; }
+  .log-meta { font-size: 12px; color: var(--text-2); margin-top: 3px; }
+  .log-notes { font-size: 13px; color: var(--text-2); margin-top: 5px; font-style: italic; }
+  .log-sig { height: 40px; border: 1px solid var(--gray-border); border-radius: 4px; background: #fff; margin-top: 6px; }
+  .log-flags { margin-top: 5px; }
+
+  /* QR MODAL */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--white); border-radius: var(--radius); padding: 2rem; width: 420px; box-shadow: var(--shadow-md); }
+  .modal-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; }
+  .modal-title { font-size: 16px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-2); line-height: 1; padding: 2px 6px; border-radius: 4px; }
+  .modal-close:hover { background: var(--gray-bg); }
+  .qr-box { background: var(--gray-bg); border-radius: var(--radius); padding: 1.5rem; display: flex; flex-direction: column; align-items: center; gap: 12px; border: 1px solid var(--gray-border); }
+  .qr-label { font-size: 12px; color: var(--text-2); text-align: center; max-width: 240px; line-height: 1.5; }
+  .qr-url { font-size: 10px; color: var(--text-2); word-break: break-all; text-align: center; font-family: monospace; background: var(--white); padding: 6px 10px; border-radius: 4px; border: 1px solid var(--gray-border); width: 100%; margin-top: 4px; }
+
+  /* PRINT */
+  @media print {
+    .no-print { display: none !important; }
+    .print-sheet { display: flex !important; flex-wrap: wrap; gap: 20px; padding: 20px; }
+    .qr-print-card { break-inside: avoid; border: 2px solid #000; border-radius: 8px; padding: 20px; width: 260px; text-align: center; }
+    .qr-print-card h3 { font-size: 13px; margin-bottom: 4px; }
+    .qr-print-card p { font-size: 11px; color: #555; margin-bottom: 12px; }
+    .qr-print-card .qr-id { font-size: 10px; font-family: monospace; color: #888; margin-top: 8px; }
+  }
+  .print-sheet { display: none; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text-2); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty p { font-size: 14px; }
+
+  /* SECTION HEADER */
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+  .section-title { font-size: 22px; font-weight: 700; }
+  .section-sub { font-size: 14px; color: var(--text-2); margin-top: 2px; }
+
+  /* RECENT */
+  .activity-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-border); }
+  .activity-row:last-child { border-bottom: none; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: var(--green); }
+  .dot-amber { background: var(--amber); }
+  .dot-red { background: var(--red); }
+  .activity-text { flex: 1; font-size: 13px; }
+  .activity-time { font-size: 12px; color: var(--text-2); }
+
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .alarm-table { font-size: 13px; }
+    .page { padding: 1rem; }
+    .nav { padding: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav no-print">
+  <a class="nav-logo" href="#">
+    <div class="logo-icon">
+      <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="9" cy="9" r="7" stroke="white" stroke-width="1.5"/>
+        <path d="M9 5v5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="9" cy="13" r="1" fill="white"/>
+      </svg>
+    </div>
+    FireCheck Admin
+  </a>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard')">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('alarms')">Alarms</button>
+    <button class="nav-tab" onclick="showPage('logs')">Inspection Log</button>
+  </div>
+  <div class="nav-spacer"></div>
+  <span class="nav-badge" id="nav-alarm-count">0 alarms</span>
+</nav>
+
+<!-- PRINT SHEET (hidden until print) -->
+<div class="print-sheet" id="print-sheet"></div>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Dashboard</div>
+      <div class="section-sub">Overview of all registered alarms and inspections</div>
+    </div>
+    <button class="btn btn-primary no-print" onclick="showPage('alarms')">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Add alarm
+    </button>
+  </div>
+  <div class="stats-grid">
+    <div class="stat"><div class="stat-val" id="ds-total">0</div><div class="stat-lbl">Total alarms</div></div>
+    <div class="stat stat-green"><div class="stat-val" id="ds-ok">0</div><div class="stat-lbl">Inspected (30d)</div></div>
+    <div class="stat stat-amber"><div class="stat-val" id="ds-due">0</div><div class="stat-lbl">Due for inspection</div></div>
+    <div class="stat stat-red"><div class="stat-val" id="ds-flags">0</div><div class="stat-lbl">Replacement flags</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Recent inspections</div>
+    <div id="ds-recent"><div class="empty"><div class="empty-icon">📋</div><p>No inspections recorded yet.</p></div></div>
+  </div>
+</div>
+
+<!-- ALARMS -->
+<div class="page" id="page-alarms">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Alarms</div>
+      <div class="section-sub">Register units and generate printable QR codes</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Register new alarm</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Property address *</label>
+        <input type="text" id="f-addr" placeholder="123 Main St, Barrie ON L4N 1A1">
+      </div>
+      <div class="form-group">
+        <label>Unit / location *</label>
+        <input type="text" id="f-unit" placeholder="Unit 2B — Bedroom hallway">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Alarm type</label>
+        <select id="f-type">
+          <option>Smoke detector</option>
+          <option>Carbon monoxide detector</option>
+          <option>Combination smoke/CO detector</option>
+          <option>Heat detector</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Install date (optional)</label>
+        <input type="date" id="f-date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <textarea id="f-notes" placeholder="Model number, special instructions, access notes..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="addAlarm()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 14 14"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Add alarm and generate QR code
+    </button>
+  </div>
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between;">
+      <span>Registered alarms</span>
+      <button class="btn btn-ghost btn-sm no-print" onclick="printAllQR()">Print all QR codes</button>
+    </div>
+    <div id="alarm-list-wrap">
+      <div class="empty"><div class="empty-icon">🔔</div><p>No alarms registered yet. Add one above.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGS -->
+<div class="page" id="page-logs">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Inspection Log</div>
+      <div class="section-sub">All completed sign-offs with signatures</div>
+    </div>
+    <button class="btn btn-ghost btn-sm no-print" onclick="exportCSV()">Export CSV</button>
+  </div>
+  <div class="card">
+    <div id="log-list-wrap">
+      <div class="empty"><div class="empty-icon">✅</div><p>No sign-offs recorded yet.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div class="overlay no-print" id="qr-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">QR Code — Print & Attach</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div id="modal-alarm-info" style="font-size:13px;color:var(--text-2);margin-bottom:1rem;"></div>
+    <div class="qr-box">
+      <div id="qr-render"></div>
+      <div class="qr-label">Scan this code to open the inspection form for this alarm</div>
+      <div class="qr-url" id="qr-url-display"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="printSingleQR()">Print this QR</button>
+      <button class="btn btn-primary" onclick="closeModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB_KEY = 'firecheck_db_v1';
+let db = { alarms: [], logs: [] };
+let currentQRAlarm = null;
+let BASE_URL = '';
+
+function getBaseURL() {
+  const u = window.location.href;
+  return u.substring(0, u.lastIndexOf('/') + 1);
+}
+
+function loadDB() {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    if (raw) db = JSON.parse(raw);
+  } catch(e) {}
+  BASE_URL = getBaseURL();
+  renderAll();
+}
+
+function saveDB() {
+  localStorage.setItem(DB_KEY, JSON.stringify(db));
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function alarmURL(id) {
+  return BASE_URL + 'inspect.html?alarm=' + id;
+}
+
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach((t, i) => {
+    t.classList.toggle('active', ['dashboard','alarms','logs'][i] === p);
+  });
+  document.getElementById('page-' + p).classList.add('active');
+  if (p === 'dashboard') renderDashboard();
+  if (p === 'alarms') renderAlarms();
+  if (p === 'logs') renderLogs();
+}
+
+function addAlarm() {
+  const addr = document.getElementById('f-addr').value.trim();
+  const unit = document.getElementById('f-unit').value.trim();
+  if (!addr || !unit) { alert('Please fill in address and unit/location.'); return; }
+  const alarm = {
+    id: genId(),
+    address: addr,
+    unit: unit,
+    type: document.getElementById('f-type').value,
+    installDate: document.getElementById('f-date').value,
+    notes: document.getElementById('f-notes').value.trim(),
+    created: Date.now()
+  };
+  db.alarms.push(alarm);
+  saveDB();
+  document.getElementById('f-addr').value = '';
+  document.getElementById('f-unit').value = '';
+  document.getElementById('f-date').value = '';
+  document.getElementById('f-notes').value = '';
+  renderAlarms();
+  updateNavBadge();
+  openQRModal(alarm.id);
+}
+
+function deleteAlarm(id) {
+  if (!confirm('Remove this alarm and all its inspection records?')) return;
+  db.alarms = db.alarms.filter(a => a.id !== id);
+  db.logs = db.logs.filter(l => l.alarmId !== id);
+  saveDB();
+  renderAll();
+}
+
+function renderAll() {
+  renderDashboard();
+  renderAlarms();
+  renderLogs();
+  updateNavBadge();
+}
+
+function updateNavBadge() {
+  document.getElementById('nav-alarm-count').textContent = db.alarms.length + ' alarm' + (db.alarms.length !== 1 ? 's' : '');
+}
+
+function getLastInspection(alarmId) {
+  const logs = db.logs.filter(l => l.alarmId === alarmId);
+  if (!logs.length) return null;
+  return logs.sort((a, b) => b.timestamp - a.timestamp)[0];
+}
+
+function isRecentlyInspected(alarmId) {
+  const last = getLastInspection(alarmId);
+  if (!last) return false;
+  return (Date.now() - last.timestamp) < 30 * 24 * 60 * 60 * 1000;
+}
+
+function renderDashboard() {
+  const inspected = db.alarms.filter(a => isRecentlyInspected(a.id)).length;
+  const due = db.alarms.length - inspected;
+  const flags = db.logs.filter(l => l.replaceChecks && l.replaceChecks.length > 0).length;
+  document.getElementById('ds-total').textContent = db.alarms.length;
+  document.getElementById('ds-ok').textContent = inspected;
+  document.getElementById('ds-due').textContent = due;
+  document.getElementById('ds-flags').textContent = flags;
+
+  const recent = db.logs.slice().sort((a, b) => b.timestamp - a.timestamp).slice(0, 8);
+  const wrap = document.getElementById('ds-recent');
+  if (!recent.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>No inspections recorded yet.</p></div>';
+    return;
+  }
+  wrap.innerHTML = recent.map(l => {
+    const alarm = db.alarms.find(a => a.id === l.alarmId) || { address: 'Deleted', unit: '' };
+    const d = new Date(l.timestamp);
+    const ago = timeAgo(l.timestamp);
+    const dotClass = l.condition.includes('passed') ? 'dot-green' : l.condition.includes('Requires') ? 'dot-red' : 'dot-amber';
+    return `<div class="activity-row">
+      <div class="activity-dot ${dotClass}"></div>
+      <div class="activity-text"><strong>${alarm.address}</strong> — ${alarm.unit} · ${l.inspector} · ${l.condition}</div>
+      <div class="activity-time">${ago}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderAlarms() {
+  const wrap = document.getElementById('alarm-list-wrap');
+  if (!db.alarms.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">🔔</div><p>No alarms registered yet. Add one above.</p></div>';
+    return;
+  }
+  wrap.innerHTML = `<table class="alarm-table">
+    <thead><tr>
+      <th>Address / Unit</th>
+      <th>Type</th>
+      <th>Last inspected</th>
+      <th>Status</th>
+      <th></th>
+    </tr></thead>
+    <tbody>
+    ${db.alarms.map(a => {
+      const last = getLastInspection(a.id);
+      const ok = last && (Date.now() - last.timestamp) < 30*24*60*60*1000;
+      const lastText = last ? new Date(last.timestamp).toLocaleDateString('en-CA') : 'Never';
+      const badge = last
+        ? (ok ? '<span class="badge badge-ok">&#10003; Inspected</span>' : '<span class="badge badge-due">⏰ Due</span>')
+        : '<span class="badge badge-new">Not inspected</span>';
+      return `<tr>
+        <td><strong>${escHtml(a.address)}</strong><br><span style="color:var(--text-2);font-size:12px;">${escHtml(a.unit)}</span></td>
+        <td style="color:var(--text-2);font-size:13px;">${escHtml(a.type)}</td>
+        <td style="color:var(--text-2);font-size:13px;">${lastText}</td>
+        <td>${badge}</td>
+        <td style="text-align:right;">
+          <button class="btn btn-ghost btn-sm" onclick="openQRModal('${a.id}')" style="margin-right:6px;">QR code</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAlarm('${a.id}')">Remove</button>
+        </td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table>`;
+}
+
+function renderLogs() {
+  const wrap = document.getElementById('log-list-wrap');
+  if (!db.logs.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">✅</div><p>No sign-offs recorded yet.</p></div>';
+    return;
+  }
+  const sorted = db.logs.slice().sort((a, b) => b.timestamp - a.timestamp);
+  wrap.innerHTML = sorted.map(l => {
+    const alarm = db.alarms.find(a => a.id === l.alarmId) || { address: 'Deleted', unit: '', type: '' };
+    const initials = l.inspector.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const d = new Date(l.timestamp).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' });
+    const flags = l.replaceChecks && l.replaceChecks.length
+      ? `<div class="log-flags">${l.replaceChecks.map(c=>`<span class="badge badge-due" style="margin:2px 4px 2px 0;font-size:11px;">⚠ ${escHtml(c)}</span>`).join('')}</div>` : '';
+    const notes = l.notes ? `<div class="log-notes">"${escHtml(l.notes)}"</div>` : '';
+    const sig = l.signature ? `<img class="log-sig" src="${l.signature}" alt="Signature">` : '';
+    return `<div class="log-entry">
+      <div class="log-avatar">${initials}</div>
+      <div class="log-body">
+        <div class="log-addr">${escHtml(alarm.address)} — ${escHtml(alarm.unit)}</div>
+        <div class="log-meta">${d} &nbsp;·&nbsp; ${escHtml(l.inspector)} (${escHtml(l.role)}) &nbsp;·&nbsp; <strong>${escHtml(l.condition)}</strong></div>
+        ${notes}${flags}${sig}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openQRModal(id) {
+  const alarm = db.alarms.find(a => a.id === id);
+  if (!alarm) return;
+  currentQRAlarm = alarm;
+  document.getElementById('modal-alarm-info').innerHTML =
+    `<strong>${escHtml(alarm.address)}</strong> — ${escHtml(alarm.unit)}<br><span style="color:var(--text-2)">${escHtml(alarm.type)}</span>`;
+  const url = alarmURL(id);
+  document.getElementById('qr-url-display').textContent = url;
+  const renderDiv = document.getElementById('qr-render');
+  renderDiv.innerHTML = '';
+  new QRCode(renderDiv, { text: url, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M });
+  document.getElementById('qr-overlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('qr-overlay').classList.remove('open');
+}
+
+function printSingleQR() {
+  if (!currentQRAlarm) return;
+  const url = alarmURL(currentQRAlarm.id);
+  const sheet = document.getElementById('print-sheet');
+  const div = document.createElement('div');
+  div.className = 'qr-print-card';
+  div.innerHTML = `<h3>${escHtml(currentQRAlarm.address)}</h3>
+    <p>${escHtml(currentQRAlarm.unit)} · ${escHtml(currentQRAlarm.type)}</p>
+    <div id="print-qr-single"></div>
+    <div class="qr-id">ID: ${currentQRAlarm.id}</div>`;
+  sheet.innerHTML = '';
+  sheet.appendChild(div);
+  new QRCode(document.getElementById('print-qr-single'), { text: url, width: 180, height: 180 });
+  setTimeout(() => window.print(), 300);
+}
+
+function printAllQR() {
+  const sheet = document.getElementById('print-sheet');
+  sheet.innerHTML = '';
+  db.alarms.forEach((a, i) => {
+    const url = alarmURL(a.id);
+    const div = document.createElement('div');
+    div.className = 'qr-print-card';
+    div.innerHTML = `<h3>${escHtml(a.address)}</h3>
+      <p>${escHtml(a.unit)} · ${escHtml(a.type)}</p>
+      <div id="print-qr-${i}"></div>
+      <div class="qr-id">ID: ${a.id}</div>`;
+    sheet.appendChild(div);
+    setTimeout(() => {
+      new QRCode(document.getElementById('print-qr-' + i), { text: url, width: 160, height: 160 });
+    }, 50);
+  });
+  setTimeout(() => window.print(), 500);
+}
+
+function exportCSV() {
+  if (!db.logs.length) { alert('No logs to export.'); return; }
+  const rows = [['Date', 'Address', 'Unit', 'Type', 'Inspector', 'Role', 'Condition', 'Notes', 'Replacement Flags']];
+  db.logs.slice().sort((a,b) => b.timestamp - a.timestamp).forEach(l => {
+    const alarm = db.alarms.find(a => a.id === l.alarmId) || { address:'?', unit:'?', type:'?' };
+    rows.push([
+      new Date(l.timestamp).toISOString(),
+      alarm.address, alarm.unit, alarm.type,
+      l.inspector, l.role, l.condition, l.notes || '',
+      (l.replaceChecks || []).join('; ')
+    ]);
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'firecheck_log_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  return Math.floor(s/86400) + 'd ago';
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadDB();
+</script>
+</body>
+</html>
