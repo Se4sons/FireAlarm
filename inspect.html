@@ -27,8 +27,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .ci{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .ci-r{background:var(--red-l)} .ci-a{background:var(--amber-l)} .ci-b{background:var(--blue-l)} .ci-g{background:var(--green-l)}
 .ct{font-size:15px;font-weight:700}
-
-/* ALARM ACCORDION */
 .alarm-block{border:1px solid var(--border);border-radius:var(--rs);margin-bottom:10px;overflow:hidden}
 .alarm-block:last-child{margin-bottom:0}
 .alarm-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;background:var(--bg)}
@@ -41,21 +39,15 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .alarm-chevron.open{transform:rotate(180deg)}
 .alarm-body{padding:1rem 1.25rem;background:var(--white);display:none}
 .alarm-body.open{display:block}
-
-/* STEPS */
 .step{display:flex;gap:11px;margin-bottom:12px}
 .step:last-child{margin-bottom:0}
 .snum{width:24px;height:24px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .stxt{font-size:14px;line-height:1.6;padding-top:2px}
-
-/* REPLACE CHECKS */
 .rc-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer}
 .rc-item:last-child{border-bottom:none}
 .rc-item input{width:18px;height:18px;margin-top:1px;accent-color:var(--amber);flex-shrink:0;cursor:pointer}
 .rc-lbl{font-size:14px;line-height:1.5}
 .rc-item.flagged .rc-lbl{color:var(--amber);font-weight:600}
-
-/* FORM */
 .fg{margin-bottom:14px}
 .fg label{display:block;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
 .fg input,.fg select,.fg textarea{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--rs);font-size:15px;font-family:inherit;background:var(--white);color:var(--text);outline:none;transition:border-color .15s;-webkit-appearance:none}
@@ -69,8 +61,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn-submit{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;font-size:16px;font-weight:700;background:var(--red);color:#fff;border:none;border-radius:var(--rs);cursor:pointer;margin-top:8px;font-family:inherit;transition:all .15s}
 .btn-submit:hover{background:var(--red-d)}
 .btn-submit:active{transform:scale(.98)}
-
-/* SUCCESS */
 .success-hd{background:#2d6a1b;color:#fff}
 .suc-icon{width:72px;height:72px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;font-size:32px}
 .suc-title{font-size:22px;font-weight:700;text-align:center;margin-bottom:8px}
@@ -80,15 +70,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .suc-table tr:last-child td{border-bottom:none}
 .suc-table td:first-child{color:var(--text2)}
 .suc-table td:last-child{font-weight:600;text-align:right;padding-left:1rem}
-
-/* ERROR */
 .err-wrap{max-width:400px;margin:4rem auto;text-align:center;padding:2rem}
-
-/* ADMIN LINK */
 .admin-link{text-align:center;padding:1.5rem;font-size:13px;color:var(--text2)}
 .admin-link a{color:var(--red);text-decoration:none;font-weight:600}
 .admin-link a:hover{text-decoration:underline}
-
 @media(max-width:400px){.content{padding:1rem}.header-in{padding:1rem}.h-title{font-size:19px}}
 </style>
 </head>
@@ -98,7 +83,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="err-wrap">
     <div style="font-size:48px;margin-bottom:1rem">🔔</div>
     <h2 style="font-size:20px;font-weight:700;margin-bottom:8px">No property found</h2>
-    <p style="font-size:14px;color:var(--text2);margin-bottom:1.5rem">This QR code doesn't match any registered property. Please contact your property manager.</p>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:1.5rem">This QR code is missing or corrupted. Please ask your property manager to reprint it.</p>
     <a href="admin.html" style="color:var(--red);font-size:14px;font-weight:600">Go to admin panel →</a>
   </div>
 </div>
@@ -112,32 +97,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
   </div>
   <div class="content">
-
-    <!-- ALARM INSTRUCTIONS -->
     <div class="card">
       <div class="ch"><div class="ci ci-r">🧪</div><div class="ct">Testing instructions</div></div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Test each alarm listed below. Tap an alarm to expand its instructions.</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">Test each alarm below. Tap to expand instructions.</p>
       <div id="alarm-accordions"></div>
     </div>
-
-    <!-- REPLACEMENT CHECKLIST (shared across all alarms) -->
     <div class="card">
       <div class="ch"><div class="ci ci-a">⚠️</div><div class="ct">Replacement checklist</div></div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:.75rem">Check any boxes that apply to <em>any</em> alarm in this unit:</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:.75rem">Check any boxes that apply to any alarm in this unit:</p>
       <div id="replace-list"></div>
     </div>
-
-    <!-- SIGN-OFF FORM -->
     <div class="card">
       <div class="ch"><div class="ci ci-b">✍️</div><div class="ct">Sign-off</div></div>
       <p style="font-size:13px;color:var(--text2);margin-bottom:1rem">This sign-off covers all alarms in this unit. By signing you confirm they were inspected on <strong id="today"></strong>.</p>
-
-      <div class="fg">
-        <label>Full name *</label>
-        <input type="text" id="f-name" placeholder="Your full name" autocomplete="name">
-      </div>
-      <div class="fg">
-        <label>Role *</label>
+      <div class="fg"><label>Full name *</label><input type="text" id="f-name" placeholder="Your full name" autocomplete="name"></div>
+      <div class="fg"><label>Role *</label>
         <select id="f-role">
           <option value="">— Select your role —</option>
           <option>Tenant</option>
@@ -147,8 +121,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           <option>Building superintendent</option>
         </select>
       </div>
-      <div class="fg">
-        <label>Overall result *</label>
+      <div class="fg"><label>Overall result *</label>
         <select id="f-cond">
           <option value="">— Select result —</option>
           <option>All alarms tested and passed</option>
@@ -158,10 +131,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
           <option>Unable to test — access issue</option>
         </select>
       </div>
-      <div class="fg">
-        <label>Notes (optional)</label>
-        <textarea id="f-notes" placeholder="Any observations, model numbers, follow-up needed..."></textarea>
-      </div>
+      <div class="fg"><label>Notes (optional)</label><textarea id="f-notes" placeholder="Any observations, model numbers, follow-up needed..."></textarea></div>
       <div class="fg">
         <label>Signature *</label>
         <div class="sig-wrap">
@@ -172,7 +142,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       </div>
       <button class="btn-submit" onclick="submit()">Submit inspection sign-off</button>
     </div>
-
     <div class="admin-link"><a href="admin.html">← Admin panel</a></div>
   </div>
 </div>
@@ -188,7 +157,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="card" style="text-align:center;padding:2rem 1.5rem">
       <div class="suc-icon">✅</div>
       <div class="suc-title">Inspection recorded</div>
-      <div class="suc-sub">This sign-off has been saved and is visible to the property manager.</div>
+      <div class="suc-sub">This sign-off has been saved. The property manager can view it in the admin panel on their device.</div>
       <table class="suc-table" id="suc-table"></table>
     </div>
     <div class="admin-link"><a href="admin.html">← Admin panel</a></div>
@@ -197,7 +166,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <script>
 const DB_KEY = 'firecheck_v2';
-let db = { properties: [], logs: [] };
 let prop = null;
 let sigDrawing = false, sigCtx = null, sigCanvas = null, sigHasData = false;
 
@@ -241,21 +209,26 @@ const REPLACE_CHECKS = [
   'Battery compartment is corroded or contacts are damaged'
 ];
 
-function load() {
-  try { const r = localStorage.getItem(DB_KEY); if(r) db = JSON.parse(r); } catch(e) {}
+function saveLog(log) {
+  try {
+    const raw = localStorage.getItem(DB_KEY);
+    const db = raw ? JSON.parse(raw) : { properties: [], logs: [] };
+    db.logs.push(log);
+    localStorage.setItem(DB_KEY, JSON.stringify(db));
+  } catch(e) {}
 }
-function save() { try { localStorage.setItem(DB_KEY, JSON.stringify(db)); } catch(e) {} }
+
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
 function init() {
-  load();
   const params = new URLSearchParams(window.location.search);
-  const pid = params.get('property');
-  if(!pid) { show('err'); return; }
-  prop = db.properties.find(p => p.id === pid);
-  if(!prop) { show('err'); return; }
+  const data = params.get('data');
+  if(!data) { show('err'); return; }
+  try {
+    prop = JSON.parse(decodeURIComponent(escape(atob(data))));
+  } catch(e) { show('err'); return; }
+  if(!prop || !prop.address || !prop.alarms || !prop.alarms.length) { show('err'); return; }
 
-  // Header
   let addr = prop.address;
   if(prop.apartment) addr += ', ' + prop.apartment;
   document.getElementById('h-badge').textContent = prop.alarms.length + ' alarm' + (prop.alarms.length!==1?'s':'') + ' registered';
@@ -266,7 +239,6 @@ function init() {
   document.getElementById('h-sub').textContent = sub;
   document.getElementById('today').textContent = new Date().toLocaleDateString('en-CA', { dateStyle:'long' });
 
-  // Alarm accordions
   document.getElementById('alarm-accordions').innerHTML = prop.alarms.map((a, i) => {
     const steps = (STEPS[a.type] || STEPS['Smoke detector']).map((s, j) =>
       `<div class="step"><div class="snum">${j+1}</div><div class="stxt">${esc(s)}</div></div>`
@@ -283,10 +255,8 @@ function init() {
       <div class="alarm-body" id="abody-${i}">${steps}</div>
     </div>`;
   }).join('');
-  // Open first one by default
   if(prop.alarms.length) toggleAlarm(0);
 
-  // Replace checklist
   document.getElementById('replace-list').innerHTML = REPLACE_CHECKS.map((c, i) =>
     `<label class="rc-item" id="rci-${i}">
       <input type="checkbox" id="rc-${i}" onchange="onFlag(${i})">
@@ -307,8 +277,7 @@ function toggleAlarm(i) {
 }
 
 function onFlag(i) {
-  const checked = document.getElementById('rc-' + i).checked;
-  document.getElementById('rci-' + i).classList.toggle('flagged', checked);
+  document.getElementById('rci-' + i).classList.toggle('flagged', document.getElementById('rc-' + i).checked);
 }
 
 function initSig() {
@@ -318,23 +287,22 @@ function initSig() {
   sigCtx.lineWidth = 2.5;
   sigCtx.lineCap = 'round';
   sigCtx.lineJoin = 'round';
-
   function pos(e) {
     const r = sigCanvas.getBoundingClientRect();
-    const sx = sigCanvas.width / r.width, sy = sigCanvas.height / r.height;
+    const sx = sigCanvas.width/r.width, sy = sigCanvas.height/r.height;
     const src = e.touches ? e.touches[0] : e;
-    return { x: (src.clientX - r.left) * sx, y: (src.clientY - r.top) * sy };
+    return { x:(src.clientX-r.left)*sx, y:(src.clientY-r.top)*sy };
   }
-  sigCanvas.addEventListener('mousedown', e => { sigDrawing=true; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); });
-  sigCanvas.addEventListener('mousemove', e => { if(!sigDrawing)return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); sigHasData=true; updateHint(); });
+  sigCanvas.addEventListener('mousedown', e=>{sigDrawing=true;const p=pos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);});
+  sigCanvas.addEventListener('mousemove', e=>{if(!sigDrawing)return;const p=pos(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();sigHasData=true;updateHint();});
   sigCanvas.addEventListener('mouseup', ()=>sigDrawing=false);
   sigCanvas.addEventListener('mouseleave', ()=>sigDrawing=false);
-  sigCanvas.addEventListener('touchstart', e=>{ e.preventDefault(); sigDrawing=true; const p=pos(e); sigCtx.beginPath(); sigCtx.moveTo(p.x,p.y); }, {passive:false});
-  sigCanvas.addEventListener('touchmove', e=>{ e.preventDefault(); if(!sigDrawing)return; const p=pos(e); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); sigHasData=true; updateHint(); }, {passive:false});
+  sigCanvas.addEventListener('touchstart', e=>{e.preventDefault();sigDrawing=true;const p=pos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);},{passive:false});
+  sigCanvas.addEventListener('touchmove', e=>{e.preventDefault();if(!sigDrawing)return;const p=pos(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();sigHasData=true;updateHint();},{passive:false});
   sigCanvas.addEventListener('touchend', ()=>sigDrawing=false);
 }
 
-function updateHint() { document.getElementById('sig-hint').style.opacity = sigHasData ? '0' : '1'; }
+function updateHint() { document.getElementById('sig-hint').style.opacity = sigHasData?'0':'1'; }
 function clearSig() { sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height); sigHasData=false; updateHint(); }
 
 function submit() {
@@ -347,25 +315,20 @@ function submit() {
   if(!sigHasData) { alert('Please draw your signature.'); sigCanvas.scrollIntoView({behavior:'smooth'}); return; }
 
   const flags = REPLACE_CHECKS.map((c,i) => document.getElementById('rc-'+i)?.checked ? c : null).filter(Boolean);
-
-  load(); // re-read in case another tab updated
   const log = {
     id: genId(),
     propertyId: prop.id,
-    alarmIds: prop.alarms.map(a => a.id),
+    propertyAddress: prop.address + (prop.apartment?', '+prop.apartment:''),
+    alarmIds: prop.alarms.map(a=>a.id),
     timestamp: Date.now(),
-    inspector: name,
-    role,
-    condition: cond,
+    inspector: name, role, condition: cond,
     notes: document.getElementById('f-notes').value.trim(),
     replaceChecks: flags,
     signature: sigCanvas.toDataURL('image/png')
   };
-  db.logs.push(log);
-  save();
+  saveLog(log);
 
-  // Success summary
-  const addr = prop.address + (prop.apartment ? ', ' + prop.apartment : '') + (prop.city ? ', ' + prop.city : '');
+  const addr = prop.address + (prop.apartment?', '+prop.apartment:'') + (prop.city?', '+prop.city:'');
   const d = new Date().toLocaleString('en-CA', { dateStyle:'long', timeStyle:'short' });
   const flagRow = flags.length ? `<tr><td>Replacement flags</td><td style="color:var(--amber)">${flags.length} item(s) flagged</td></tr>` : '';
   document.getElementById('suc-table').innerHTML = `
@@ -375,9 +338,8 @@ function submit() {
     <tr><td>Result</td><td>${esc(cond)}</td></tr>
     <tr><td>Date/time</td><td>${d}</td></tr>
     ${flagRow}`;
-
   show('success');
-  window.scrollTo({ top:0, behavior:'smooth' });
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function show(s) {
