@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FireCheck — Admin Login</title>
+<style>
+:root {
+  --red:#E24B4A; --red-d:#C73A39; --red-l:#FCEBEB;
+  --text:#1a1a18; --text2:#5F5E5A; --border:#E2E0D8;
+  --bg:#F7F6F3; --white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+.box{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:2.5rem 2rem;width:100%;max-width:380px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:2rem;justify-content:center}
+.logo-icon{width:40px;height:40px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.logo-text{font-size:20px;font-weight:700}
+h2{font-size:18px;font-weight:700;margin-bottom:.4rem;text-align:center}
+.sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:1.75rem}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fg input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;outline:none;transition:border-color .15s}
+.fg input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(226,75,74,.1)}
+.btn{width:100%;padding:12px;font-size:15px;font-weight:700;background:var(--red);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;transition:all .15s;margin-top:4px}
+.btn:hover{background:var(--red-d)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.err{font-size:13px;color:var(--red);text-align:center;margin-top:12px;min-height:20px}
+.back{text-align:center;margin-top:1.25rem;font-size:13px;color:var(--text2)}
+.back a{color:var(--red);text-decoration:none;font-weight:600}
+.back a:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="22" height="22" fill="none" viewBox="0 0 22 22">
+        <circle cx="11" cy="11" r="8.5" stroke="#fff" stroke-width="1.8"/>
+        <path d="M11 7v5" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+        <circle cx="11" cy="15.5" r="1.2" fill="#fff"/>
+      </svg>
+    </div>
+    <span class="logo-text">FireCheck</span>
+  </div>
+  <h2>Admin sign in</h2>
+  <p class="sub">Property managers only</p>
+  <div class="fg">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="you@example.com" autocomplete="email">
+  </div>
+  <div class="fg">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+  </div>
+  <button class="btn" id="login-btn" onclick="doLogin()">Sign in</button>
+  <div class="err" id="err-msg"></div>
+  <div class="back"><a href="index.html">← Back to home</a></div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDOEIlZtW2Z36EgRMXixWJZlcB59iWVdBo",
+  authDomain: "firecheck-67ca4.firebaseapp.com",
+  projectId: "firecheck-67ca4",
+  storageBucket: "firecheck-67ca4.firebasestorage.app",
+  messagingSenderId: "1090032557054",
+  appId: "1:1090032557054:web:6a0fd958c8891c90853eaf"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// If already logged in, go straight to admin
+onAuthStateChanged(auth, user => {
+  if (user) window.location.href = 'admin.html';
+});
+
+window.doLogin = async function() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('err-msg');
+  err.textContent = '';
+  if (!email || !password) { err.textContent = 'Please enter your email and password.'; return; }
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    window.location.href = 'admin.html';
+  } catch(e) {
+    err.textContent = e.code === 'auth/invalid-credential' ? 'Incorrect email or password.' : 'Login failed. Please try again.';
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
+  }
+};
+
+document.addEventListener('keydown', e => { if(e.key === 'Enter') window.doLogin(); });
+</script>
+</body>
+</html>
